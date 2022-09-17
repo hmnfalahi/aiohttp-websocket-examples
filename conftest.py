@@ -1,3 +1,4 @@
+import socket
 from contextlib import asynccontextmanager
 
 import pytest
@@ -9,6 +10,16 @@ from server_without_callback import app as no_callback_websocket_application
 
 
 type_ = None
+
+
+@pytest.fixture
+def free_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind((socket.gethostname(), 0))
+        return s.getsockname()[1]
+    finally:
+        s.close()
 
 
 def application_type(new_type=None):
@@ -25,12 +36,12 @@ applications = dict(
 
 
 @pytest.fixture
-async def websocket_server(event_loop):
+async def websocket_server(event_loop, free_port):
     host = '0.0.0.0'
     application = applications.get(application_type())
     runner = AppRunner(application)
     await runner.setup()
-    tcpsite = TCPSite(runner, host, 1112, shutdown_timeout=2)
+    tcpsite = TCPSite(runner, host, free_port, shutdown_timeout=2)
     await tcpsite.start()
 
     yield tcpsite.name
