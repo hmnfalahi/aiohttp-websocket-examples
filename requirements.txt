@@ -1,5 +1,7 @@
 aiohttp
+aio_pika
 aioredis
+pika
 pytest
 pytest-aiohttp
 pytest-asyncio

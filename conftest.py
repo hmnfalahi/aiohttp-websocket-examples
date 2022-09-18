@@ -1,4 +1,3 @@
-import socket
 from contextlib import asynccontextmanager
 
 import pytest
@@ -7,19 +6,10 @@ from aiohttp.web_runner import AppRunner, TCPSite
 
 from server_with_redis_callback import app as redis_websocket_application
 from server_without_callback import app as no_callback_websocket_application
+from server_with_rmq_callback import app as rmq_websocket_application
 
 
 type_ = None
-
-
-@pytest.fixture
-def free_port():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.bind((socket.gethostname(), 0))
-        return s.getsockname()[1]
-    finally:
-        s.close()
 
 
 def application_type(new_type=None):
@@ -32,16 +22,17 @@ def application_type(new_type=None):
 applications = dict(
     no_callback=no_callback_websocket_application,
     redis_callback=redis_websocket_application,
+    rmq_callback=rmq_websocket_application,
 )
 
 
 @pytest.fixture
-async def websocket_server(event_loop, free_port):
+async def websocket_server(event_loop):
     host = '0.0.0.0'
     application = applications.get(application_type())
     runner = AppRunner(application)
     await runner.setup()
-    tcpsite = TCPSite(runner, host, free_port, shutdown_timeout=2)
+    tcpsite = TCPSite(runner, host, shutdown_timeout=2)
     await tcpsite.start()
 
     yield tcpsite.name
