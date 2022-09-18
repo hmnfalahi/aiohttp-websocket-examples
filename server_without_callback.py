@@ -1,22 +1,20 @@
-import logging
 import traceback
 from concurrent.futures import CancelledError
 
 import aiohttp
 from aiohttp import web
 
-
-logging.basicConfig(level=logging.INFO)
+from helpers import logger
 
 
 async def websocket_handler(request):
-    logging.info('New connection!!!')
+    logger.info('New connection!!!')
 
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     app_state()['connections'].add(ws)
 
-    logging.info('Socket stored')
+    logger.info('Socket stored')
 
     try:
         async for msg in ws:
@@ -28,22 +26,22 @@ async def websocket_handler(request):
                 await ws.send_str(msg.data+'/answer')
 
             elif msg.type == aiohttp.WSMsgType.ERROR:
-                logging.info(
+                logger.info(
                     f'WS connection closed with exception {ws.exception()}'
                 )
 
     except CancelledError as exp:
-        logging.info(f'WebSocket CancelError:\n{exp}\n{traceback.print_exc()}')
+        logger.info(f'WebSocket CancelError:\n{exp}\n{traceback.print_exc()}')
 
     except Exception as exp:
-        logging.error(
+        logger.error(
             f'WebSocket handler error:\n{exp}\n{traceback.print_exc()}'
         )
 
     finally:
         app_state()['connections'].remove(ws)
         await ws.close()
-        logging.info('WebSocket connection closed')
+        logger.info('WebSocket connection closed')
 
 
 async def start_workers(app):

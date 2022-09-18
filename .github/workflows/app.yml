@@ -5,7 +5,8 @@ name: Python application
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - '**'
   pull_request:
     branches: [ "master" ]
 
@@ -16,6 +17,15 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+
+    services:
+      rabbitmq:
+        image: rabbitmq:3.9
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
 
     steps:
     - uses: actions/checkout@v3
