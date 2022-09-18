@@ -1,7 +1,7 @@
 import pika
 from pika import PlainCredentials
 
-from helpers import logger
+from awe.helpers import logger
 
 
 class WebsocketClient:

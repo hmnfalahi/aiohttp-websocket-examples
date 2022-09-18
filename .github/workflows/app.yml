@@ -38,6 +38,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install -e .
     - name: Start Redis
       uses: supercharge/redis-github-action@1.4.0
     - name: Lint with flake8

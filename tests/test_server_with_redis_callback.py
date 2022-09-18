@@ -2,7 +2,7 @@ from asyncio import wait_for, TimeoutError
 
 import pytest
 
-from redis_ import push_async
+from awe.redis_ import push_async
 from conftest import application_type
 
 
