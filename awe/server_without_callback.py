@@ -4,7 +4,7 @@ from concurrent.futures import CancelledError
 import aiohttp
 from aiohttp import web
 
-from helpers import logger
+from awe.helpers import logger
 
 
 async def websocket_handler(request):

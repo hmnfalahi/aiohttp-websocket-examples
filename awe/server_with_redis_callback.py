@@ -2,12 +2,11 @@ import asyncio
 import traceback
 from concurrent.futures import CancelledError
 
-import aio_pika
 import aiohttp
-from aio_pika import ExchangeType
 from aiohttp import web
 
-from helpers import logger
+from awe.helpers import logger
+from awe.redis_ import flush_all_async, pop_async, async_redis
 
 
 async def websocket_handler(request):
@@ -47,43 +46,37 @@ async def websocket_handler(request):
         logger.info('WebSocket connection closed')
 
 
-async def callback():
-    try:
-        async with await _create_rabbitmq_connection() as connection:
-            channel = await connection.channel()
-            exchange = await channel.declare_exchange(
-                'ws_exchange',
-                ExchangeType.FANOUT,
-            )
-            queue = await channel.declare_queue(exclusive=True)
-            await queue.bind(exchange)
-            async with queue.iterator() as queue_iter:
-                async for message in queue_iter:
-                    async with message.process():
-                        ws_connections = app_state()['connections']
-                        for ws in ws_connections:
-                            if ws is None or ws.closed:
-                                app_state()['connections'].remove(ws)
-                                continue
-                            await ws.send_str(str(message.body.decode()))
-    except Exception as exp:
-        logger.critical(exp, exc_info=True)
+async def worker(name):
+    await flush_all_async()
+    while True:
+        try:
+            message = await pop_async(name)
+            if not message:
 
+                await asyncio.sleep(1)
+                continue
 
-async def _create_rabbitmq_connection():
-    return await aio_pika.connect_robust(
-        host='localhost',
-        port=5672,
-        login='guest',
-        password='guest',
-        reconnect_interval=5,
-    )
+            ws_connections = app_state()['connections']
+            for ws in ws_connections:
+                if ws is None or ws.closed:
+                    app_state()['connections'].remove(ws)
+                    continue
+                await ws.send_str(message)
+
+        except Exception as exc:
+            logger.critical(exc, exc_info=True)
 
 
 async def start_workers(app):
+    queue_name = 'queue1'
     loop = asyncio.get_event_loop()
+    app_state()['queue_name'] = queue_name
     app_state()['connections'] = set()
-    app_state()['message_dispatcher'] = loop.create_task(callback())
+    app_state()['message_dispatcher'] = loop.create_task(worker(queue_name))
+
+
+async def prepare_session_manager(app):
+    await async_redis()
 
 
 async def cleanup_background_connections(app):
@@ -98,6 +91,7 @@ def app_state():
 app = web.Application()
 app.add_routes([web.get('/', websocket_handler)])
 app['state'] = {}
+app.on_startup.append(prepare_session_manager)
 app.on_startup.append(start_workers)
 app.on_cleanup.append(cleanup_background_connections)
 

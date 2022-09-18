@@ -2,7 +2,7 @@ import aio_pika
 from aio_pika import ExchangeType
 
 from conftest import application_type
-from rmq_ import WebsocketClient
+from awe.rmq_ import WebsocketClient
 
 
 class TestWS:

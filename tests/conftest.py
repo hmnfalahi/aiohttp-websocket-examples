@@ -4,9 +4,10 @@ import pytest
 import aiohttp
 from aiohttp.web_runner import AppRunner, TCPSite
 
-from server_with_redis_callback import app as redis_websocket_application
-from server_without_callback import app as no_callback_websocket_application
-from server_with_rmq_callback import app as rmq_websocket_application
+from awe.server_with_redis_callback import app as redis_websocket_application
+from awe.server_without_callback import app as \
+    no_callback_websocket_application
+from awe.server_with_rmq_callback import app as rmq_websocket_application
 
 
 type_ = None

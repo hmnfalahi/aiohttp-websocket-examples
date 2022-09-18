@@ -1,7 +1,4 @@
-aiohttp
-aio_pika
-aioredis
-pika
+# Testing
 pytest
 pytest-aiohttp
 pytest-asyncio
